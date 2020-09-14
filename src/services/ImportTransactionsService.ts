@@ -18,7 +18,7 @@ class ImportTransactionsService {
       throw new AppError('Incorrect file type.');
     }
 
-    // solution find on https://stackoverflow.com/a/52199182/14115629
+    // solution found on https://stackoverflow.com/a/52199182/14115629
     const transactions = await csvtojson({
       trim: true,
     }).fromFile(fileUploaded);
@@ -32,25 +32,45 @@ class ImportTransactionsService {
 
     const createTransactionService = new CreateTransactionService();
 
-    const savedIncomeTransactions = await Promise.all(
-      incomeTransactions.map(async transaction => {
-        const savedTransaction = await createTransactionService.execute(
-          transaction,
-        );
+    // const savedIncomeTransactions = await Promise.all(
+    //   incomeTransactions.map(async transaction => {
+    //     const savedTransaction = await createTransactionService.execute(
+    //       transaction,
+    //     );
 
-        return savedTransaction;
-      }),
-    );
+    //     return savedTransaction;
+    //   }),
+    // );
 
-    const savedOutcomeTransactions = await Promise.all(
-      outcomeTransactions.map(async transaction => {
-        const savedTransaction = await createTransactionService.execute(
-          transaction,
-        );
+    const savedIncomeTransactions = [];
 
-        return savedTransaction;
-      }),
-    );
+    for await (const transaction of incomeTransactions) {
+      const savedTransaction = await createTransactionService.execute(
+        transaction,
+      );
+
+      savedIncomeTransactions.push(savedTransaction);
+    }
+
+    // const savedOutcomeTransactions = await Promise.all(
+    //   outcomeTransactions.map(async transaction => {
+    //     const savedTransaction = await createTransactionService.execute(
+    //       transaction,
+    //     );
+
+    //     return savedTransaction;
+    //   }),
+    // );
+
+    const savedOutcomeTransactions = [];
+
+    for await (const transaction of outcomeTransactions) {
+      const savedTransaction = await createTransactionService.execute(
+        transaction,
+      );
+
+      savedOutcomeTransactions.push(savedTransaction);
+    }
 
     await fs.promises.unlink(fileUploaded);
 
